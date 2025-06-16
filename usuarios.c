@@ -1,8 +1,5 @@
 #include "usuarios.h"
 
-#define MAX_USUARIOS 100
-#define FILENAME "usuarios.txt"
-
 void hash_senha(char *senha, char *resultado) {
     int i;
     for(i=0; senha[i] != '\0'; i++) {
@@ -17,8 +14,17 @@ void salvar_usuario(Usuario u) {
         printf("[X] Erro ao abrir o arquivo.\n");
         return;
     }
-    fprintf(file, "%s %s\n", u.username, u.senha_hash);
+    fprintf(file, "%s %s %s %s %d", u.username, u.senha_hash, u.musica, u.hobbie, u.num_amigos);
+    
+    /* vou testar algumas cenas aqui
+    for (int i = 0; i < u.num_amigos; i++) {
+        fprintf(file, " %s", u.amigos[i]);
+    }*/
+
+    fprintf(file, "\n");
     fclose(file);
+
+    
 }
 
 int carregar_usuarios(Usuario usuarios[], int max) {
@@ -80,8 +86,17 @@ void cadastrar() {
 
     printf("[?] Senha: ");
     scanf("%s", senha);
+    
+    printf("[?] Gosto musical: ");
+    scanf("%s", novo.musica);
+
+    printf("[?] Hobbie: ");
+    scanf("%s", novo.hobbie);
 
     hash_senha(senha, novo.senha_hash);
+
+    novo.num_amigos = 0;
+
     salvar_usuario(novo);
 
     printf("[!] Usuário cadastrado com sucesso!\n");
@@ -99,10 +114,14 @@ void alterar_senha(char *username) {
     printf("------------------------------------------\n\n");
     printf("[!] Nova senha: ");
     scanf("%s", nova_senha);
+    system("cls");
+
     hash_senha(nova_senha, nova_hash);
 
     int encontrado = 0;
-    for (int i = 0; i < total; i++) {
+    int i;
+
+    for (i=0; i < total; i++) {
         if (strcmp(usuarios[i].username, username) == 0) {
             strcpy(usuarios[i].senha_hash, nova_hash);
             encontrado = 1;
@@ -120,7 +139,6 @@ void alterar_senha(char *username) {
         printf("[X] Erro ao abrir o arquivo para escrita.\n");
         return;
     }
-    int i;
 
     for (i=0; i < total; i++) {
         fprintf(file, "%s %s\n", usuarios[i].username, usuarios[i].senha_hash);
@@ -130,14 +148,32 @@ void alterar_senha(char *username) {
     printf("[!] Senha alterada com sucesso!\n");
 }
 
+void ver_perfil(char *username){
+
+}
+
 void logado(char *username) {
     char op2;
 
     do 
-    {
-        printf("Olá, @%s \n", username);
-        printf("[1] Alterar senha\n");
-        printf("[0] Logout\n");
+    {   
+        printf("------------------------------------------\n");
+        printf("         Olá, @%s \n", username);
+        printf("------------------------------------------\n\n");
+
+        printf("------------------------------------------\n");
+        printf("|           [1] Alterar senha            |\n");
+        printf("------------------------------------------\n");
+        printf("|            [2] Ver perfil              |\n");
+        printf("------------------------------------------\n");
+        printf("|            [3] Meus amigos             |\n");
+        printf("------------------------------------------\n");
+        printf("|          [4] Adicionar amigo           |\n");
+        printf("------------------------------------------\n");
+        printf("|         [5] Sugestão de Amizade        |\n");
+        printf("------------------------------------------\n");
+        printf("|               [0] Logout               |\n");
+        printf("------------------------------------------\n");
         scanf(" %c", &op2);
 
         switch(op2) 
@@ -145,12 +181,17 @@ void logado(char *username) {
             case '1':
                 alterar_senha(username);
                 break;
+            case '2':
+                ver_perfil(username);
+                break;
             case '0':
                 printf("Fazendo logout...\n");
                 break;
             default:
-                printf("Opção inválida!\n");
+                printf("Opção Inválida!\n");
         }
+        system("pause");
+        system("cls");
     } while(op2 != '0');
 }
 
@@ -166,13 +207,12 @@ void fazer_login() {
     scanf("%s", username);
     printf("[?] Senha: ");
     scanf("%s", senha);
-    
     system("cls");
     
     if (login(username, senha)) {
-        printf("[!] Login realizado com sucesso! Bem-vindo, %s.\n", username);
+        /*printf("[!] Login realizado com sucesso! Bem-vindo, %s.\n", username);
         system("pause");
-        system("cls");
+        system("cls");*/
         logado(username);
     } else {
         printf("[X] Usuário ou senha incorretos.\n");
