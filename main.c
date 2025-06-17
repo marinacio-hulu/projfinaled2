@@ -1,4 +1,5 @@
 #include "usuarios.h"
+#include<sys/wait.h>
 
 int main()
 {
@@ -18,7 +19,7 @@ int main()
         printf("|               [0] Sair                 |\n");
         printf("------------------------------------------\n\n");
         scanf(" %c", &op1);
-        system("cls");
+        system("clear");
 
         switch (op1)
         {
@@ -38,9 +39,9 @@ int main()
                 printf("Opção Inválida\n");
             break;
         }
-
-        system("pause");
-        system("cls");
+        //usleep(500);
+        //system("pause");
+        system("clear");
         
     }while(op1 != '0');
 

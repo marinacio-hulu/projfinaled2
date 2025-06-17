@@ -28,6 +28,9 @@ void fazer_login();
 void alterar_senha(char *username);
 void logado(char *username);
 void ver_perfil(char *username);
+void listar_amigos(char *username);
+void modo_chat(char *user, char *amigo);
+void* receber_mensagens(void *arg);
 
 
 #endif
