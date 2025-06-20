@@ -8,17 +8,19 @@
 
 #define FILENAME "usuarios.txt"
 #define MAX_CARACTERISTICAS 10
+#define MAX_CARACTERISTICA 30
 #define MAX_USUARIOS 100
 #define MAX_NOME 20
+#define MAX_SENHA 20
 
 typedef struct {
     char username[MAX_NOME];
-    char senha[20];
-    char caracteristicas[MAX_CARACTERISTICAS][30];
+    char senha[MAX_SENHA];
+    char caracteristicas[MAX_CARACTERISTICAS][MAX_CARACTERISTICA];
     int numCaracteristicas;
     char amigos[MAX_USUARIOS][MAX_NOME];
     int numAmigos;
-    char pedidos[MAX_USUARIOS][MAX_NOME]; // Novos: pedidos de amizade recebidos
+    char pedidos[MAX_USUARIOS][MAX_NOME];
     int numPedidos;
     int seguidores;
     int seguindo;
@@ -36,4 +38,7 @@ void mostrar_perfil(Usuario *usuario);
 void enviar_pedido_amizade(Usuario *usuarios, int total, Usuario *remetente);
 void ver_pedidos_amizade(Usuario *usuarios, int total, Usuario *usuario);
 void mostrar_todos_usuarios(Usuario usuarios[], int *total);
+void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario);
+void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios);
+void trocar_senha(Usuario usuarios[], int total, Usuario *usuario);
 #endif

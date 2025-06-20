@@ -95,8 +95,8 @@ int encontrar_usuario(Usuario usuarios[], int total, const char *username) {
  ----------------------------------------------- */
 void cadastrar_usuario(Usuario usuarios[], int *totalUsuarios) {
     Usuario novo;
-    char username[20];
-    char senha[20];
+    char username[MAX_NOME];
+    char senha[MAX_SENHA];
 
     printf("\t\t\t+----------------------------------------+\n");
     printf("\t\t\t|               CRIAR CONTA              |\n");
@@ -121,7 +121,7 @@ void cadastrar_usuario(Usuario usuarios[], int *totalUsuarios) {
     scanf("%d", &novo.numCaracteristicas);
 
     for (int i = 0; i < novo.numCaracteristicas; i++) {
-        printf("\t\t\t[?] Característica %d: ", i + 1);
+        printf("\t\t\t[?] Característica %d: ", i+1);
         scanf(" %s", novo.caracteristicas[i]);
     }
 
@@ -144,7 +144,7 @@ void cadastrar_usuario(Usuario usuarios[], int *totalUsuarios) {
  Função fazer o login na rede
  ----------------------------------------------- */
 int login(Usuario usuarios[], int *totalUsuarios) {
-    char username[20], senha[20], senha_hash[20];
+    char username[MAX_NOME], senha[MAX_SENHA], senha_hash[MAX_SENHA];
 
     printf("\t\t\t+----------------------------------------+\n");
     printf("\t\t\t|                 LOGIN                  |\n");
@@ -209,6 +209,12 @@ void enviar_pedido_amizade(Usuario *usuarios, int total, Usuario *remetente) {
     scanf(" %s", destino);
     
     str_tolower(destino);
+
+    if(strcmp(remetente->username, destino) == 0){
+        msg('x', "Você não pode adicionar você");
+        return;
+    }
+
     int idx = encontrar_usuario(usuarios, total, destino);
     if (idx == -1) {
         msg('x', "Usuário não encontrado.");
@@ -284,6 +290,125 @@ void ver_pedidos_amizade(Usuario *usuarios, int total, Usuario *usuario) {
 }
 
 /* -----------------------------------------------
+ Função para sugerir amigos com base nas
+ características em comum
+ ----------------------------------------------- */
+void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
+    int i, j, k;
+    int sugeridos = 0;
+
+    /*printf("\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t|         SUGESTÕES DE AMIZADE           |\n");
+    printf("\t\t\t+----------------------------------------+\n\n");*/
+
+    for (i=0; i<total; i++) {
+        Usuario *outro = &usuarios[i];
+
+        if (!outro->ativo || strcmp(outro->username, usuario->username) == 0)
+            continue;
+
+        
+        int amigos = 0;
+        for (j=0; j<usuario->numAmigos; j++) {
+            if (strcmp(usuario->amigos[j], outro->username) == 0) {
+                amigos = 1;
+                break;
+            }
+        }
+        if (amigos) continue;
+
+        
+        int comum = 0;
+        char caracteristicasComum[MAX_CARACTERISTICAS][MAX_CARACTERISTICA];
+        for (j=0; j<usuario->numCaracteristicas; j++) {
+            for (k = 0; k < outro->numCaracteristicas; k++) {
+                if (strcmp(usuario->caracteristicas[j], outro->caracteristicas[k]) == 0) {
+                    strcpy(caracteristicasComum[comum], outro->caracteristicas[k]);
+                    comum++;
+                    
+                }
+            }
+        }
+
+        if (comum > 0) {
+            sugeridos++;
+            printf("\t\t\t+----------------------------------------+\n");
+            printf("\t\t\t| @%-20s                  |\n", outro->username);
+            printf("\t\t\t+----------------------------------------+\n");
+            printf("\t\t\t| (%-2d caracteristica(s) em comum)        |\n", comum);
+            printf("\t\t\t+----------------------------------------+\n");
+            int l;
+            for (l=0; l<comum; l++) {
+                printf("\t\t\t| %-30s         |\n", caracteristicasComum[l]);
+                printf("\t\t\t+----------------------------------------+\n");
+            }
+        }
+
+        system("pause");
+        system("cls");
+    }
+
+    if (sugeridos == 0) {
+        msg('!', "Nenhuma sugestão encontrada.");
+    } else {
+        printf("\n\t\t\t[!] Total de sugestões: %d\n", sugeridos);
+    }
+}
+
+/* -----------------------------------------------
+ Função para mostrar todos os amigos do usuário
+ ----------------------------------------------- */
+void meus_amigos(Usuario usuarios[], int total, Usuario *usuario) {
+
+    if (usuario->numAmigos == 0) {
+        msg('!', "Você ainda não tem amigos.");
+        return;
+    }
+    printf("\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t|              MEUS AMIGOS               |\n");
+    printf("\t\t\t+----------------------------------------+\n");
+    int i;
+    for (i=0; i<usuario->numAmigos; i++) {
+        char *amigo = usuario->amigos[i];
+        printf("\t\t\t| @%-20s                  |\n", amigo);
+        printf("\t\t\t+----------------------------------------+\n");
+        
+    }
+    printf("\t\t\t| Total de amigos: %-3d                   |\n", usuario->numAmigos);
+    printf("\t\t\t+----------------------------------------+\n");
+
+}
+
+/* -----------------------------------------------
+ Função para trocar a senha do usuario 
+----------------------------------------------- */
+void trocar_senha(Usuario usuarios[], int total, Usuario *usuario){
+    char senha[MAX_SENHA], senha_hash[MAX_SENHA];
+
+    printf("\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t|               TROCAR SENHA             |\n");
+    printf("\t\t\t+----------------------------------------+\n\n");
+
+    printf("\t\t\t[?] Senha: ");
+    scanf(" %s", senha);
+    hash_senha(senha, senha_hash);
+
+    if(strcmp(usuario->senha, senha_hash) == 0){
+        printf("\t\t\t[?] Insira a nova senha: ");
+        scanf(" %s", senha);
+        hash_senha(senha, senha_hash);
+
+        strcpy(usuario->senha, senha_hash);
+        salvar_usuarios(usuarios, total);
+        msg('!', "Senha trocada!");
+    } else {
+        msg('x', "Senha incorrecta");
+    }
+
+}
+
+
+/* -----------------------------------------------
  menu 
 ----------------------------------------------- */
 void menu(Usuario usuarios[], int *totalUsuarios) {
@@ -337,6 +462,10 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t| 5 | Ver Pedidos de Amizade             |\n");
         printf("\t\t\t+---+------------------------------------+\n");
+        printf("\t\t\t| 6 | Sugestão de Amigos                 |\n");
+        printf("\t\t\t+---+------------------------------------+\n");
+        printf("\t\t\t| 7 | Meus Amigos                        |\n");
+        printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t| 0 | Terminar sessão                    |\n");
         printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t");
@@ -363,15 +492,15 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
                 msg('x', "Usuário não econtrado");
             }
         } else if(op2=='3'){
-
+            editar_perfil(usuarios, usuario, totalUsuarios);
         } else if(op2=='4') {
             enviar_pedido_amizade(usuarios, totalUsuarios, usuario);
         } else if(op2=='5'){
             ver_pedidos_amizade(usuarios, totalUsuarios, usuario);
         } else if(op2=='6') {
-
+            sugerir_amigos(usuarios, totalUsuarios, usuario);
         } else if(op2=='7'){
-
+            meus_amigos(usuarios, totalUsuarios, usuario);
         } else if(op2=='0') {
             msg('!', "Secção terminada");
         } else {
@@ -381,4 +510,34 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         system("pause");
         system("cls");
     } while (op2 != '0');
+}
+
+/* -----------------------------------------------
+ menu editar perfil 
+----------------------------------------------- */
+void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
+    char op3;
+    do {
+        printf("\t\t\t+----------------------------------------+\n");
+        printf("\t\t\t|              EDITAR PERFIL             |\n");
+        printf("\t\t\t+---+------------------------------------+\n");
+        printf("\t\t\t| 1 | Trocar Senha                       |\n");
+        printf("\t\t\t+---+------------------------------------+\n");
+        printf("\t\t\t| 0 | Voltar                             |\n");
+        printf("\t\t\t+---+------------------------------------+\n");
+        printf("\t\t\t");
+        scanf(" %c", &op3);
+        system("cls");
+        
+        if (op3=='1') {
+            trocar_senha(usuarios, totalUsuarios, usuario);
+        } else if(op3=='2') {
+            /**/
+        } else if(op3=='0') {
+        } else {
+            msg('x', "Opção inválida");
+        }
+        system("pause");
+        system("cls");
+    } while (op3 != '0');
 }
