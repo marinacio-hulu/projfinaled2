@@ -16,9 +16,9 @@ void str_tolower(char *str) {
 void msg(char icone, char *msg){
     system("cls");
     printf("\n\n\n\n\n\n\n\n");
-    printf("\t\t\t+----------------------------------------+\n");
-    printf("\t\t\t| [%c] %-34s |\n", icone, msg);
-    printf("\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t+----------------------------------------------+\n");
+    printf("\t\t\t| [%c] %-40s |\n", icone, msg);
+    printf("\t\t\t+----------------------------------------------+\n");
     printf("\n\n\n\n\n\n\n\n");
 }
 
@@ -109,7 +109,7 @@ void cadastrar_usuario(Usuario usuarios[], int *totalUsuarios) {
     strcpy(novo.username, username);
     
     if (encontrar_usuario(usuarios, *totalUsuarios, novo.username) != -1) {
-        msg('!', "Usuário já existe.");
+        msg('!', "Usuário já existe ou inválido");
         return;
     }
 
@@ -321,7 +321,7 @@ void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
         int comum = 0;
         char caracteristicasComum[MAX_CARACTERISTICAS][MAX_CARACTERISTICA];
         for (j=0; j<usuario->numCaracteristicas; j++) {
-            for (k = 0; k < outro->numCaracteristicas; k++) {
+            for (k=0; k<outro->numCaracteristicas; k++) {
                 if (strcmp(usuario->caracteristicas[j], outro->caracteristicas[k]) == 0) {
                     strcpy(caracteristicasComum[comum], outro->caracteristicas[k]);
                     comum++;
@@ -407,6 +407,220 @@ void trocar_senha(Usuario usuarios[], int total, Usuario *usuario){
 
 }
 
+/* -----------------------------------------------
+ Função para remover amigo do usuário
+ ----------------------------------------------- */
+void remover_amigo(Usuario usuarios[], int total, Usuario *usuario) {
+    if (usuario->numAmigos == 0) {
+        msg('!', "Sem amigos para remover.");
+        return;
+    }
+
+    char nome[MAX_NOME];
+    printf("\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t|             REMOVER AMIGO              |\n");
+    printf("\t\t\t+----------------------------------------+\n\n");
+    printf("\t\t\t[?] Nome do amigo a remover: ");
+    scanf(" %s", nome);
+    str_tolower(nome);
+
+    int idxAmigo = encontrar_usuario(usuarios, total, nome);
+    if (idxAmigo == -1) {
+        msg('x', "Amigo não encontrado.");
+        return;
+    }
+
+    int i,j, encontrou = 0;
+    for (i = 0; i < usuario->numAmigos; i++) {
+        if (strcmp(usuario->amigos[i], nome) == 0) {
+            encontrou = 1;
+            break;
+        }
+    }
+
+    if (!encontrou) {
+        msg('x', "Esse usuário não é seu amigo.");
+        return;
+    }
+
+    // aqui removo o amigo da lista do usuário
+    for (j=i; j < usuario->numAmigos - 1; j++) {
+        strcpy(usuario->amigos[j], usuario->amigos[j + 1]);
+    }
+    usuario->numAmigos--;
+
+    // aq tou a remover o usuário da lista do amigo
+    Usuario *amigo = &usuarios[idxAmigo];
+    for (i=0; i<amigo->numAmigos; i++) {
+        if (strcmp(amigo->amigos[i], usuario->username) == 0) {
+            for (j=i; j<amigo->numAmigos - 1; j++) {
+                strcpy(amigo->amigos[j], amigo->amigos[j + 1]);
+            }
+            amigo->numAmigos--;
+            break;
+        }
+    }
+
+    msg('!', "Amigo removido com sucesso.");
+    salvar_usuarios(usuarios, total);
+}
+
+
+/* -----------------------------------------------
+ Função para seguir ou deixar de seguir um usuario
+ ----------------------------------------------- */
+void seguir_usuario(Usuario usuarios[], int total, Usuario *usuario) {
+    char nome[MAX_NOME];
+    int i, j;
+    printf("\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t|               SEGUIR USUÁRIO           |\n");
+    printf("\t\t\t+----------------------------------------+\n\n");
+    printf("\t\t\t[?] Username que deseja seguir: ");
+    scanf(" %s", nome);
+    str_tolower(nome);
+
+    if (strcmp(nome, usuario->username) == 0) {
+        msg('x', "Você não pode seguir você.");
+        return;
+    }
+
+    int idx = encontrar_usuario(usuarios, total, nome);
+    if (idx == -1 || !usuarios[idx].ativo) {
+        msg('x', "Usuário não encontrado ou inativo.");
+        return;
+    }
+
+    Usuario *alvo = &usuarios[idx];
+
+    for (i=0; i<usuario->seguindo; i++) {
+        if (strcmp(usuario->seguindoUsuarios[i], nome) == 0) {
+            char op;
+            printf("\t\t\t[!] Você já segue esse usuário.\n");
+            printf("\t\t\t[?] Deseja deixar de seguir? (s/n): ");
+            scanf(" %c", &op);
+
+            
+            if (op == 's' || op == 'S') {
+                // aq tou a remover da lista seguindo do usuário
+                for (j=i; j<usuario->seguindo - 1; j++) {
+                    strcpy(usuario->seguindoUsuarios[j], usuario->seguindoUsuarios[j + 1]);
+                }
+                usuario->seguindo--;
+
+                // removo a qty de seguidores do usuário que deixei de seguir
+                if (alvo->seguidores > 0) {
+                    alvo->seguidores--;
+                }
+
+                msg('!', "Deixou de seguir este usuário");
+                salvar_usuarios(usuarios, total);
+            } else {
+                msg('!', "Operação cancelada.");
+            }
+            return;
+        }
+    }
+
+    strcpy(usuario->seguindoUsuarios[usuario->seguindo++], nome);
+    alvo->seguidores++;
+
+    msg('!', "Começou a seguir este usuário!");
+    salvar_usuarios(usuarios, total);
+}
+
+/* -----------------------------------------------
+ Função para mostrar grau de popularidade
+ ----------------------------------------------- */
+void grau_popularidade(Usuario *usuario) {
+    printf("\t\t\t+------------------------------------------+\n");
+    printf("\t\t\t|            GRAU DE POPULARIDADE          |\n");
+    printf("\t\t\t+------------------------------------------+\n");
+    printf("\t\t\t| Username: @%-20s          |\n", usuario->username);
+    printf("\t\t\t|------------------------------------------+\n");
+    printf("\t\t\t| Seguidores: %-3d                          |\n", usuario->seguidores);
+    printf("\t\t\t|------------------------------------------+\n");
+    printf("\t\t\t| Seguindo: %-3d                            |\n", usuario->seguindo);
+    printf("\t\t\t+------------------------------------------+\n\n");
+    
+}
+
+/* -----------------------------------------------
+ Função para mostrar top 3 influencers
+ ----------------------------------------------- */
+void mostrar_influencers(Usuario usuarios[], int total) {
+    int influencia[MAX_USUARIOS], i,j;
+
+    for (i=0; i<total; i++) {
+        influencia[i] = usuarios[i].seguidores + usuarios[i].numAmigos;
+    }
+
+    printf("\t\t\t+-----------------------------------------------------------------------------+\n");
+    printf("\t\t\t|                             TOP 3 INFLUENCERS                               |\n");
+    printf("\t\t\t+---+-----------------------+-----------------+-------------+-----------------+\n");
+
+    for (j=0; j<3; j++) {
+        int max = -1;
+        int idx = -1;
+
+        for (i=0; i<total; i++) {
+            if (influencia[i] > max) {
+                max = influencia[i];
+                idx = i;
+            }
+        }
+
+        if (idx != -1 && max > 0) {
+            printf("\t\t\t| %d | @%-20s | Influência: %-3d | Amigos: %-3d | Seguidores: %-3d |\n", 
+                j+1, usuarios[idx].username, max, usuarios[idx].numAmigos, usuarios[idx].seguidores);
+            printf("\t\t\t+---+-----------------------+-----------------+-------------+-----------------+\n");
+            
+            influencia[idx] = -1;
+        }
+    }
+}
+
+/* -----------------------------------------------
+ Função para encontrar amigos em comum entre dois usuários
+ ----------------------------------------------- */
+void amigos_em_comum(Usuario usuarios[], int total) {
+    char user1[MAX_NOME], user2[MAX_NOME];
+    printf("\t\t\t[?] Primeiro usuário: ");
+    scanf(" %s", user1);
+    str_tolower(user1);
+
+    printf("\t\t\t[?] Segundo usuário: ");
+    scanf(" %s", user2);
+    str_tolower(user2);
+
+    system("cls");
+
+    int idx1 = encontrar_usuario(usuarios, total, user1);
+    int idx2 = encontrar_usuario(usuarios, total, user2);
+
+    if (idx1 == -1 || idx2 == -1) {
+        msg('x', "Um ou ambos usuários não encontrados.");
+        return;
+    }
+
+    Usuario *u1 = &usuarios[idx1];
+    Usuario *u2 = &usuarios[idx2];
+    printf("\t\t\t+----------------------------+\n");
+    printf("\t\t\t| Amigos em comum entre Eles |\n");
+    printf("\t\t\t+----------------------------+\n");
+    int encontrados = 0, i, j;
+    for (i=0; i<u1->numAmigos; i++) {
+        for (j=0; j<u2->numAmigos; j++) {
+            if (strcmp(u1->amigos[i], u2->amigos[j]) == 0) {
+                printf("\t\t\t| @%-20s      |\n", u1->amigos[i]);
+                printf("\t\t\t+----------------------------+\n");
+                encontrados++;
+            }
+        }
+    }
+    if (encontrados == 0) {
+        msg('!', "Nenhum amigo em comum encontrado.");
+    }
+}
 
 /* -----------------------------------------------
  menu 
@@ -446,47 +660,48 @@ void menu(Usuario usuarios[], int *totalUsuarios) {
 ----------------------------------------------- */
 void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
     char op2;
+    char user[20];
+
     do {
-        printf("\t\t\t+----------------------------------------+\n");
-        printf("\t\t\t|             C O N E C T - C            |\n");
-        printf("\t\t\t+----------------------------------------+\n");
-        printf("\t\t\t| Seja Bem Vindo, @%-20s  |\n", usuario->username);
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 1 | Ver Perfil                         |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 2 | Procurar Usuário                   |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 3 | Editar Perfil                      |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 4 | Enviar Pedido de Amizade           |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 5 | Ver Pedidos de Amizade             |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 6 | Sugestão de Amigos                 |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 7 | Meus Amigos                        |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t| 0 | Terminar sessão                    |\n");
-        printf("\t\t\t+---+------------------------------------+\n");
-        printf("\t\t\t");
+        printf("\t\t+---------------------------------------------------------------------------------+\n");
+        printf("\t\t|                                 C O N E C T - C                                 |\n");
+        printf("\t\t+---------------------------------------------------------------------------------+\n");
+        printf("\t\t| Seja Bem Vindo, @%-20s                                           |\n", usuario->username);
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 1 | Ver Perfil                         | 8 | Remover Amigo                      |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 2 | Procurar Usuário                   | 9 | Seguir Usuário                     |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 3 | Editar Perfil                      | A | Grau de Popularidade               |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 4 | Enviar Pedido de Amizade           | B | Top 3 Influencers                  |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 5 | Ver Pedidos de Amizade             | C | Amigos em Comum                    |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 6 | Sugestão de Amigos                 | D | Distância Mínima                   |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 7 | Meus Amigos                        | E | Enviar Mensagem                    |\n");
+        printf("\t\t+---+------------------------------------+---+------------------------------------+\n");
+        printf("\t\t| 0 | Terminar sessão                                                             |\n");
+        printf("\t\t+---+-----------------------------------------------------------------------------+\n");
+        printf("\t\t");
         scanf(" %c", &op2);
         system("cls");
         
         if (op2=='1') {
             mostrar_perfil(usuario);
         } else if(op2=='2') {
-            char perfil[20];
             printf("\t\t\t+----------------------------------------+\n");
             printf("\t\t\t|            PROCURAR USUÁRIO            |\n");
             printf("\t\t\t+----------------------------------------+\n\n");
             printf("\t\t\t[?] Insira o username: ");
-            scanf("%s", perfil);
+            scanf("%s", user);
             system("cls");
             
-            str_tolower(perfil);
+            str_tolower(user);
 
-            int idx = encontrar_usuario(usuarios, totalUsuarios, perfil);
-            if (idx != -1 && strcmp(usuarios[idx].username, perfil) == 0) {
+            int idx = encontrar_usuario(usuarios, totalUsuarios, user);
+            if (idx != -1 && strcmp(usuarios[idx].username, user) == 0) {
                 mostrar_perfil(&usuarios[idx]);
             } else {
                 msg('x', "Usuário não econtrado");
@@ -501,6 +716,31 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
             sugerir_amigos(usuarios, totalUsuarios, usuario);
         } else if(op2=='7'){
             meus_amigos(usuarios, totalUsuarios, usuario);
+        } else if(op2=='8'){
+            remover_amigo(usuarios, totalUsuarios, usuario);
+        } else if(op2=='9'){
+            seguir_usuario(usuarios, totalUsuarios, usuario);
+        } else if(op2=='a' || op2 == 'A'){
+            printf("\t\t\t[?] Insira o username: ");
+            scanf("%s", user);
+            system("cls");
+            
+            str_tolower(user);
+
+            int idx = encontrar_usuario(usuarios, totalUsuarios, user);
+            if (idx != -1 && strcmp(usuarios[idx].username, user) == 0) {
+                grau_popularidade(&usuarios[idx]);
+            } else {
+                msg('x', "Usuário não econtrado");
+            }
+        } else if(op2=='b' || op2 == 'B'){
+            mostrar_influencers(usuarios, totalUsuarios);
+        } else if(op2=='c' || op2 == 'C'){
+            amigos_em_comum(usuarios, totalUsuarios);
+        } else if(op2=='d' || op2 == 'D'){
+
+        } else if(op2=='e' || op2 == 'E'){
+
         } else if(op2=='0') {
             msg('!', "Secção terminada");
         } else {
@@ -523,6 +763,8 @@ void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t| 1 | Trocar Senha                       |\n");
         printf("\t\t\t+---+------------------------------------+\n");
+        /*printf("\t\t\t| 2 | Apagar Conta                       |\n");
+        printf("\t\t\t+---+------------------------------------+\n");*/
         printf("\t\t\t| 0 | Voltar                             |\n");
         printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t");
@@ -532,7 +774,7 @@ void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         if (op3=='1') {
             trocar_senha(usuarios, totalUsuarios, usuario);
         } else if(op3=='2') {
-            /**/
+            apagar_conta(usuarios, totalUsuarios, usuario);
         } else if(op3=='0') {
         } else {
             msg('x', "Opção inválida");
@@ -540,4 +782,30 @@ void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         system("pause");
         system("cls");
     } while (op3 != '0');
+}
+
+
+/* -----------------------------------------------
+ feature não 100% funcional 
+----------------------------------------------- */
+void apagar_conta(Usuario usuarios[], int total, Usuario *usuario){
+    char op;
+    printf("\t\t\t+--------------------------------------------+\n");
+    printf("\t\t\t|                APAGAR CONTA                |\n");
+    printf("\t\t\t+--------------------------------------------+\n");
+    printf("\t\t\t[?] Deseja realmente apagar a sua conta?\n");
+    printf("\t\t\tO seu username não poderá mais ser utilizado\n");
+    printf("\t\t\tCaso pretenda criar uma nova conta\n");
+    printf("\t\t\t(s/n): ");
+    scanf(" %c", &op);
+
+    if (op == 's' || op == 'S') {
+        usuario->ativo = 0;
+        msg('!', "A sua conta foi excluída");
+        salvar_usuarios(usuarios, total);
+        exit(0);
+    } else {
+        msg('!', "Operação cancelada.");
+    }
+    return;
 }

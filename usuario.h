@@ -24,6 +24,7 @@ typedef struct {
     int numPedidos;
     int seguidores;
     int seguindo;
+    char seguindoUsuarios[MAX_USUARIOS][MAX_NOME];
     int ativo;
 } Usuario;
 
@@ -41,4 +42,9 @@ void mostrar_todos_usuarios(Usuario usuarios[], int *total);
 void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario);
 void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios);
 void trocar_senha(Usuario usuarios[], int total, Usuario *usuario);
+void remover_amigo(Usuario usuarios[], int total, Usuario *usuario);
+void seguir_usuario(Usuario usuarios[], int total, Usuario *usuario);
+void grau_popularidade(Usuario *usuario);
+void mostrar_influencers(Usuario usuarios[], int total);
+void apagar_conta(Usuario usuarios[], int total, Usuario *usuario);
 #endif
