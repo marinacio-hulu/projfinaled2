@@ -1,5 +1,4 @@
 #include "usuario.h"
-
 /* -----------------------------------------------
  Função auxiliar para converter tudo 
  para minusculo
@@ -46,21 +45,6 @@ int carregar_usuarios(Usuario usuarios[], int *total) {
     fread(usuarios, sizeof(Usuario), *total, f);
     fclose(f);
     return 1;
-}
-
-/* -----------------------------------------------
- Função para mostrar todos os usuários
- estou apenas a usar para alguns debugs**
- ----------------------------------------------- */
-void mostrar_todos_usuarios(Usuario usuarios[], int *total) {
-    int i;
-    for(i=0; i<*total; i++){
-        printf("---------------------\n");
-        printf("User: %s\n", usuarios[i].username);
-        printf("Pass: %s\n", usuarios[i].senha);
-        printf("---------------------\n");
-
-    }
 }
 
 /* -----------------------------------------------
@@ -236,7 +220,8 @@ void enviar_pedido_amizade(Usuario *usuarios, int total, Usuario *remetente) {
             return;
         }
     }
-    
+
+    //Adiciona o pedido na lista de pedidos do destinatário
     strcpy(destinatario->pedidos[destinatario->numPedidos++], remetente->username);
     msg('!', "Pedido envidado!");
     salvar_usuarios(usuarios, total);
@@ -253,6 +238,7 @@ void ver_pedidos_amizade(Usuario *usuarios, int total, Usuario *usuario) {
     }
     
     int i;
+    // Percorre por todos os pedidos de amizade recebidos
     for (i= 0; i < usuario->numPedidos; i++) {
         char *solicitante = usuario->pedidos[i];
         printf("\t\t\t+----------------------------------------+\n");
@@ -266,11 +252,12 @@ void ver_pedidos_amizade(Usuario *usuarios, int total, Usuario *usuario) {
         char op;
         scanf(" %c", &op);
         
+        // Localiza o índice do solicitante na lista de usuários
         int idxSolicitante = encontrar_usuario(usuarios, total, solicitante);
         if (idxSolicitante == -1) continue;
         
         if (op=='1') {
-            
+            // Caso aceite, adiciona ambos como amigos um do outro
             strcpy(usuario->amigos[usuario->numAmigos++], solicitante);
             strcpy(usuarios[idxSolicitante].amigos[usuarios[idxSolicitante].numAmigos++], usuario->username);
             msg('!', "Pedido aceite");
@@ -279,6 +266,8 @@ void ver_pedidos_amizade(Usuario *usuarios, int total, Usuario *usuario) {
         }
         
         int j;
+        // Remove o pedido atual da lista de pedidos pendentes
+        // Move todos elementos para a esquerda para preencher a lacuna
         for (j=i; j<usuario->numPedidos - 1; j++) {
             strcpy(usuario->pedidos[j], usuario->pedidos[j + 1]);
         }
@@ -297,17 +286,14 @@ void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
     int i, j, k;
     int sugeridos = 0;
 
-    /*printf("\t\t\t+----------------------------------------+\n");
-    printf("\t\t\t|         SUGESTÕES DE AMIZADE           |\n");
-    printf("\t\t\t+----------------------------------------+\n\n");*/
-
     for (i=0; i<total; i++) {
         Usuario *outro = &usuarios[i];
 
+        // Ignora o próprio usuário ou usuários inativos
         if (!outro->ativo || strcmp(outro->username, usuario->username) == 0)
             continue;
 
-        
+        // Verifica se já são amigos (se sim, ignora)
         int amigos = 0;
         for (j=0; j<usuario->numAmigos; j++) {
             if (strcmp(usuario->amigos[j], outro->username) == 0) {
@@ -315,14 +301,16 @@ void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
                 break;
             }
         }
+        
         if (amigos) continue;
 
-        
+        // Compara as características do usuário com as do "outro"
         int comum = 0;
         char caracteristicasComum[MAX_CARACTERISTICAS][MAX_CARACTERISTICA];
         for (j=0; j<usuario->numCaracteristicas; j++) {
             for (k=0; k<outro->numCaracteristicas; k++) {
                 if (strcmp(usuario->caracteristicas[j], outro->caracteristicas[k]) == 0) {
+                    // Armazena as características em comum para exibição
                     strcpy(caracteristicasComum[comum], outro->caracteristicas[k]);
                     comum++;
                     
@@ -350,8 +338,6 @@ void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
 
     if (sugeridos == 0) {
         msg('!', "Nenhuma sugestão encontrada.");
-    } else {
-        printf("\n\t\t\t[!] Total de sugestões: %d\n", sugeridos);
     }
 }
 
@@ -443,13 +429,13 @@ void remover_amigo(Usuario usuarios[], int total, Usuario *usuario) {
         return;
     }
 
-    // aqui removo o amigo da lista do usuário
+    // Removendo o amigo da lista do usuário
     for (j=i; j < usuario->numAmigos - 1; j++) {
         strcpy(usuario->amigos[j], usuario->amigos[j + 1]);
     }
     usuario->numAmigos--;
 
-    // aq tou a remover o usuário da lista do amigo
+    // Removendo o usuario da lista do amigo
     Usuario *amigo = &usuarios[idxAmigo];
     for (i=0; i<amigo->numAmigos; i++) {
         if (strcmp(amigo->amigos[i], usuario->username) == 0) {
@@ -501,13 +487,14 @@ void seguir_usuario(Usuario usuarios[], int total, Usuario *usuario) {
 
             
             if (op == 's' || op == 'S') {
-                // aq tou a remover da lista seguindo do usuário
+                // Removendo a lista seguindo do usuário
                 for (j=i; j<usuario->seguindo - 1; j++) {
                     strcpy(usuario->seguindoUsuarios[j], usuario->seguindoUsuarios[j + 1]);
                 }
                 usuario->seguindo--;
 
-                // removo a qty de seguidores do usuário que deixei de seguir
+                // Removendo a quantidade de seguidores do usuário
+                // que parou de ser seguido
                 if (alvo->seguidores > 0) {
                     alvo->seguidores--;
                 }
@@ -559,9 +546,10 @@ void mostrar_influencers(Usuario usuarios[], int total) {
     printf("\t\t\t+---+-----------------------+-----------------+-------------+-----------------+\n");
 
     for (j=0; j<3; j++) {
-        int max = -1;
-        int idx = -1;
+        int max = -1; // Maior influência encontrada até o momento
+        int idx = -1; // Índice do usuário com essa influência
 
+        // Procura o usuário com maior influência
         for (i=0; i<total; i++) {
             if (influencia[i] > max) {
                 max = influencia[i];
@@ -569,11 +557,13 @@ void mostrar_influencers(Usuario usuarios[], int total) {
             }
         }
 
+        // Se encontrar um usuário válido com influência positiva
         if (idx != -1 && max > 0) {
             printf("\t\t\t| %d | @%-20s | Influência: %-3d | Amigos: %-3d | Seguidores: %-3d |\n", 
                 j+1, usuarios[idx].username, max, usuarios[idx].numAmigos, usuarios[idx].seguidores);
             printf("\t\t\t+---+-----------------------+-----------------+-------------+-----------------+\n");
             
+            // Marca esse usuário como já processado para evitar repetição
             influencia[idx] = -1;
         }
     }
@@ -594,6 +584,7 @@ void amigos_em_comum(Usuario usuarios[], int total) {
 
     system("cls");
 
+    // Procurar os índices dos usuários no vetor
     int idx1 = encontrar_usuario(usuarios, total, user1);
     int idx2 = encontrar_usuario(usuarios, total, user2);
 
@@ -607,7 +598,10 @@ void amigos_em_comum(Usuario usuarios[], int total) {
     printf("\t\t\t+----------------------------+\n");
     printf("\t\t\t| Amigos em comum entre Eles |\n");
     printf("\t\t\t+----------------------------+\n");
+
     int encontrados = 0, i, j;
+
+    // Verifica, comparando os amigos de u1 com os amigos de u2
     for (i=0; i<u1->numAmigos; i++) {
         for (j=0; j<u2->numAmigos; j++) {
             if (strcmp(u1->amigos[i], u2->amigos[j]) == 0) {
@@ -623,7 +617,7 @@ void amigos_em_comum(Usuario usuarios[], int total) {
 }
 
 /* -----------------------------------------------
- menu 
+ Menu inicial
 ----------------------------------------------- */
 void menu(Usuario usuarios[], int *totalUsuarios) {
     char op;
@@ -661,6 +655,8 @@ void menu(Usuario usuarios[], int *totalUsuarios) {
 void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
     char op2;
     char user[20];
+    setlocale(LC_ALL, "Portuguese");
+
 
     do {
         printf("\t\t+---------------------------------------------------------------------------------+\n");
@@ -738,9 +734,26 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         } else if(op2=='c' || op2 == 'C'){
             amigos_em_comum(usuarios, totalUsuarios);
         } else if(op2=='d' || op2 == 'D'){
+            char u1[MAX_NOME], u2[MAX_NOME];
 
+            printf("\t\t\t[?] Primeiro usuário: ");
+            scanf(" %s", u1);
+            str_tolower(u1);
+
+            printf("\t\t\t[?] Segundo usuário: ");
+            scanf(" %s", u2);
+            str_tolower(u2);
+
+            int dist = distancia_minima(usuarios, totalUsuarios, u1, u2);
+            if (dist == -1) {
+                msg('!', "Não há conexão entre eles.");
+            } else {
+                printf("\t\t\t+----------------------------------------+\n");
+                printf("\t\t\t| Distância mínima: %-3d                  |\n", dist);
+                printf("\t\t\t+----------------------------------------+\n\n");
+            }
         } else if(op2=='e' || op2 == 'E'){
-
+            chat(usuarios, usuario, totalUsuarios);
         } else if(op2=='0') {
             msg('!', "Secção terminada");
         } else {
@@ -763,8 +776,8 @@ void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t| 1 | Trocar Senha                       |\n");
         printf("\t\t\t+---+------------------------------------+\n");
-        /*printf("\t\t\t| 2 | Apagar Conta                       |\n");
-        printf("\t\t\t+---+------------------------------------+\n");*/
+        printf("\t\t\t| 2 | Apagar Conta                       |\n");
+        printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t| 0 | Voltar                             |\n");
         printf("\t\t\t+---+------------------------------------+\n");
         printf("\t\t\t");
@@ -786,7 +799,7 @@ void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
 
 
 /* -----------------------------------------------
- feature não 100% funcional 
+ Função para apagar a conta (desativa a conta apenas) 
 ----------------------------------------------- */
 void apagar_conta(Usuario usuarios[], int total, Usuario *usuario){
     char op;
@@ -794,13 +807,19 @@ void apagar_conta(Usuario usuarios[], int total, Usuario *usuario){
     printf("\t\t\t|                APAGAR CONTA                |\n");
     printf("\t\t\t+--------------------------------------------+\n");
     printf("\t\t\t[?] Deseja realmente apagar a sua conta?\n");
-    printf("\t\t\tO seu username não poderá mais ser utilizado\n");
-    printf("\t\t\tCaso pretenda criar uma nova conta\n");
     printf("\t\t\t(s/n): ");
     scanf(" %c", &op);
 
     if (op == 's' || op == 'S') {
+        char u[MAX_NOME] = "usr_exc";
+        char numero[10];
+        sprintf(numero, "%d", total);
+        strcat(u, numero);
+
+        strcpy(usuario->username, u);
+
         usuario->ativo = 0;
+
         msg('!', "A sua conta foi excluída");
         salvar_usuarios(usuarios, total);
         exit(0);
@@ -808,4 +827,204 @@ void apagar_conta(Usuario usuarios[], int total, Usuario *usuario){
         msg('!', "Operação cancelada.");
     }
     return;
+}
+/* -----------------------------------------------
+ Função achar a distância mínima entre dois usuários
+ busca em largura (BFS) para encontrar a menor distância 
+ (número de conexões) entre dois usuários (vértices do grafo) 
+ com base nas relações de amizade
+ ----------------------------------------------- */
+int distancia_minima(Usuario usuarios[], int total, char *u1, char *u2) {
+    // Vetor para marcar se um usuário já foi visitado
+    int visitado[MAX_USUARIOS] = {0};
+
+    // Vetor para armazenar a distância (número de conexões)
+    // do usuário de origem até os demais
+    int distancia[MAX_USUARIOS] = {0};
+
+    // Fila para a BFS, com ponteiros de frente e traseira
+    int fila[MAX_USUARIOS];
+    int frente = 0; 
+    int tras = 0;
+
+    int idx1 = encontrar_usuario(usuarios, total, u1);
+    int idx2 = encontrar_usuario(usuarios, total, u2);
+
+    if (idx1 == -1 || idx2 == -1) return -1;
+
+    // Inicia a BFS a partir do usuário de origem (idx1)
+
+    fila[tras++] = idx1;         // Adiciona idx1 à fila
+    visitado[idx1] = 1;          // Marca como visitado
+
+    // Enquanto houver elementos na fila
+    while (frente < tras) {
+        int atual = fila[frente++];  // Remove o primeiro da fila
+
+        // Se chegou ao usuário de destino, retorna a distância
+        if (atual == idx2) return distancia[atual];
+
+        Usuario *u = &usuarios[atual];
+
+        // Percorre sobre os amigos do usuário atual
+        for (int i = 0; i < u->numAmigos; i++) {
+
+            // Encontra o índice do amigo (vizinho no grafo)
+            int vizinho = encontrar_usuario(usuarios, total, u->amigos[i]);
+
+            // Se não foi visitado ainda
+            if (vizinho != -1 && !visitado[vizinho]) {
+                fila[tras++] = vizinho; // Adiciona o vizinho à fila
+                visitado[vizinho] = 1;  // Marca como visitado
+                distancia[vizinho] = distancia[atual] + 1; // Atualiza a distância
+            }
+        }
+    }
+
+    // Se chegou aqui, os usuários não estão conectados
+    return -1;
+}
+
+
+
+/* -----------------------------------------------
+ Função para criar o chat 
+----------------------------------------------- */
+void criar_chat(const char *u1, const char *u2, char *nomeArquivo) {
+    if (strcmp(u1, u2) < 0)
+        sprintf(nomeArquivo, "chat/%s_%s.txt", u1, u2);
+    else
+        sprintf(nomeArquivo, "chat/%s_%s.txt", u2, u1);
+}
+
+
+/* -----------------------------------------------
+ Função para carregar o histórico de mensagens 
+----------------------------------------------- */
+void carregar_historico_mensagens(const char *arquivo) {
+    FILE *f = fopen(arquivo, "r");
+    if (!f) {
+        printf("\n[!] Nenhuma conversa anterior encontrada.\n");
+        return;
+    }
+
+    char linha[256];
+    printf("\t\t\t\t+----------------------------------------+\n");
+    printf("\t\t\t\t|               HISTORICO                |\n");
+    printf("\t\t\t\t+----------------------------------------+\n\n");
+    while (fgets(linha, sizeof(linha), f)) {
+        printf("\t\t\t\t%s", linha);
+    }
+    printf("\n\t\t\t\t+----------------------------------------+\nёт");
+
+    fclose(f);
+}
+
+/* -----------------------------------------------
+ Função para carregar as mensagem em tempo real
+ usando threads
+----------------------------------------------- */
+void __cdecl carregar_mensagens(void *args) {
+    void **dados = (void **)args;
+    char *arquivo = (char *)dados[0];
+    long *pos = (long *)dados[1];
+
+    FILE *f;
+    char linha[256];
+
+    while (1) {
+        f = fopen(arquivo, "r");
+        if (f) {
+            fseek(f, *pos, SEEK_SET);
+            while (fgets(linha, sizeof(linha), f)) {
+                printf("\t\t\t\t%s", linha);
+                *pos = ftell(f);
+            }
+            fclose(f);
+        }
+        Sleep(1000); 
+    }
+}
+
+/* -----------------------------------------------
+ Função para abrir o chat 
+----------------------------------------------- */
+void chat(Usuario usuarios[], Usuario *remetente, int total) {
+    char destino[MAX_NOME];
+    printf("\t\t\t[?] Nome do amigo com quem deseja conversar: ");
+    scanf(" %s", destino);
+    str_tolower(destino);
+
+    system("cls");
+
+    int idx = encontrar_usuario(usuarios, total, destino);
+    if (idx == -1) {
+        msg('x', "Usuário não encontrado.");
+        return;
+    }
+
+    Usuario *amigo = &usuarios[idx];
+
+    int i, ehAmigo  = 0;
+    // Verifica se o destino é realmente um amigo do remetente
+    for (i=0; i < remetente->numAmigos; i++) {
+        if (strcmp(remetente->amigos[i], amigo->username) == 0) {
+            ehAmigo  = 1;
+            break;
+        }
+    }
+
+    if (!ehAmigo) {
+        msg('x', "Você só pode conversar com seus amigos.");
+        return;
+    }
+
+    char nomeArquivo[100];
+    criar_chat(remetente->username, amigo->username, nomeArquivo);
+
+    carregar_historico_mensagens(nomeArquivo);
+
+    FILE *f = fopen(nomeArquivo, "a+");
+    if (!f) {
+        msg('x', "Erro ao abrir o arquivo de conversa.");
+        return;
+    }
+    printf("\t\t\t\t+----------------------------------------+\n\n");
+    printf("\t\t\t\t| @%-20s                  |\n", amigo->username);
+    printf("\t\t\t\t+----------------------------------------+\n\n");
+    printf("\t\t\t\t(Digite /sair para terminar o chat)\n\n");
+
+    // Armazena a posição atual do fim do arquivo para leitura futura
+    long pos = 0;
+    f = fopen(nomeArquivo, "a+");
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        pos = ftell(f);
+        fclose(f);
+    }
+    fclose(f);
+
+    // Cria uma thread para carregar mensagens novas enquanto o chat está aberto
+    void *args[2];
+    args[0] = nomeArquivo;
+    args[1] = &pos;
+    // função atualiza a tela com novas mensagens
+    _beginthread(carregar_mensagens, 0, args);
+
+    char mensagem[256];
+    while (1) {
+        fflush(stdin);
+        fgets(mensagem, sizeof(mensagem), stdin);
+
+        if (strncmp(mensagem, "/sair", 5) == 0) {
+            msg('!', "Chat finalizado");
+            break;
+        }
+
+        f = fopen(nomeArquivo, "a");
+        if (f) {
+            fprintf(f, "%s: %s", remetente->username, mensagem);
+            fclose(f);
+        }
+    }
 }

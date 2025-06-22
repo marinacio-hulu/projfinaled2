@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <windows.h>
+#include <process.h>
+#include <locale.h>
 
 #define FILENAME "usuarios.txt"
 #define MAX_CARACTERISTICAS 10
@@ -38,7 +41,6 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios);
 void mostrar_perfil(Usuario *usuario);
 void enviar_pedido_amizade(Usuario *usuarios, int total, Usuario *remetente);
 void ver_pedidos_amizade(Usuario *usuarios, int total, Usuario *usuario);
-void mostrar_todos_usuarios(Usuario usuarios[], int *total);
 void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario);
 void editar_perfil(Usuario usuarios[], Usuario *usuario, int totalUsuarios);
 void trocar_senha(Usuario usuarios[], int total, Usuario *usuario);
@@ -47,4 +49,10 @@ void seguir_usuario(Usuario usuarios[], int total, Usuario *usuario);
 void grau_popularidade(Usuario *usuario);
 void mostrar_influencers(Usuario usuarios[], int total);
 void apagar_conta(Usuario usuarios[], int total, Usuario *usuario);
+void criar_chat(const char *u1, const char *u2, char *nomeArquivo);
+void carregar_historico_mensagens(const char *arquivo);
+void __cdecl carregar_mensagens(void *args);
+void chat(Usuario usuarios[], Usuario *remetente, int total);
+void carregar_mensagens(void *arg);
+int distancia_minima(Usuario usuarios[], int total, char *u1, char *u2);
 #endif
