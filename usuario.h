@@ -8,6 +8,10 @@
 #include <windows.h>
 #include <process.h>
 #include <locale.h>
+#include <conio.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define FILENAME "usuarios.txt"
 #define MAX_CARACTERISTICAS 10
@@ -55,4 +59,6 @@ void __cdecl carregar_mensagens(void *args);
 void chat(Usuario usuarios[], Usuario *remetente, int total);
 void carregar_mensagens(void *arg);
 int distancia_minima(Usuario usuarios[], int total, char *u1, char *u2);
+void usrs(Usuario u[], int total);
+void esconder_senha(char *password);
 #endif

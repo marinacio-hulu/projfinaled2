@@ -1,4 +1,17 @@
 #include "usuario.h"
+
+void usrs(Usuario u[], int total){
+    for (int i = 0; i < total; i++)
+    {
+        printf("---------------------\n");
+        printf("User: %s\n", u[i].username);
+        printf("Pass: %s\n", u[i].senha);
+        printf("---------------------\n");
+
+    }
+    
+}
+
 /* -----------------------------------------------
  Função auxiliar para converter tudo 
  para minusculo
@@ -32,6 +45,27 @@ void hash_senha(char *senha, char *resultado) {
         resultado[i] = senha[i] + 3;
     }
     resultado[i] = '\0';
+}
+
+/* -----------------------------------------------
+ Função para esconder a senha
+ ----------------------------------------------- */
+void esconder_senha(char *password) {
+    int i = 0;
+    char ch;
+
+    while ((ch = getch()) != '\r' && i < MAX_SENHA -1){
+        if ((ch == '\n' && i>0)) {
+            i--;
+        } else if (ch != '\b') {
+            password[i++] = ch;
+        }
+    }
+
+    printf("\n");
+
+    password[i] = '\0';
+    
 }
 
 /* -----------------------------------------------
@@ -98,7 +132,8 @@ void cadastrar_usuario(Usuario usuarios[], int *totalUsuarios) {
     }
 
     printf("\t\t\t[?] Senha: ");
-    scanf(" %s", senha);
+    esconder_senha(senha);
+
     hash_senha(senha, novo.senha);
 
     printf("\t\t\t[?] Quantas características? ");
@@ -137,7 +172,7 @@ int login(Usuario usuarios[], int *totalUsuarios) {
     printf("\t\t\t[?] Username: ");
     scanf(" %s", username);
     printf("\t\t\t[?] Senha: ");
-    scanf(" %s", senha);
+    esconder_senha(senha);
     system("cls");
 
     str_tolower(username);
@@ -376,12 +411,13 @@ void trocar_senha(Usuario usuarios[], int total, Usuario *usuario){
     printf("\t\t\t+----------------------------------------+\n\n");
 
     printf("\t\t\t[?] Senha: ");
-    scanf(" %s", senha);
+    esconder_senha(senha);
+
     hash_senha(senha, senha_hash);
 
     if(strcmp(usuario->senha, senha_hash) == 0){
         printf("\t\t\t[?] Insira a nova senha: ");
-        scanf(" %s", senha);
+        esconder_senha(senha);
         hash_senha(senha, senha_hash);
 
         strcpy(usuario->senha, senha_hash);
@@ -649,13 +685,14 @@ void menu(Usuario usuarios[], int *totalUsuarios) {
     } while (op != '0');
 }
 
+
 /* -----------------------------------------------
  submenu quando o usuário está logado
 ----------------------------------------------- */
 void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
     char op2;
     char user[20];
-    setlocale(LC_ALL, "Portuguese");
+    setlocale(LC_ALL, "");
 
 
     do {
@@ -853,16 +890,18 @@ int distancia_minima(Usuario usuarios[], int total, char *u1, char *u2) {
     if (idx1 == -1 || idx2 == -1) return -1;
 
     // Inicia a BFS a partir do usuário de origem (idx1)
+    // Adiciona idx1 à fila
+    fila[tras++] = idx1;
+    // Marca como visitado
+    visitado[idx1] = 1;          
 
-    fila[tras++] = idx1;         // Adiciona idx1 à fila
-    visitado[idx1] = 1;          // Marca como visitado
-
-    // Enquanto houver elementos na fila
+    
     while (frente < tras) {
-        int atual = fila[frente++];  // Remove o primeiro da fila
+        // Remove o primeiro da fila
+        int atual = fila[frente++];  
 
-        // Se chegou ao usuário de destino, retorna a distância
-        if (atual == idx2) return distancia[atual];
+        if (atual == idx2) 
+            return distancia[atual];
 
         Usuario *u = &usuarios[atual];
 
@@ -872,20 +911,20 @@ int distancia_minima(Usuario usuarios[], int total, char *u1, char *u2) {
             // Encontra o índice do amigo (vizinho no grafo)
             int vizinho = encontrar_usuario(usuarios, total, u->amigos[i]);
 
-            // Se não foi visitado ainda
+            /* -----------------------------------------------
+             Se não foi visitado ainda, adiciona o vizinho à fila,
+             marca como visitado e actualiza a distância
+            */
             if (vizinho != -1 && !visitado[vizinho]) {
-                fila[tras++] = vizinho; // Adiciona o vizinho à fila
-                visitado[vizinho] = 1;  // Marca como visitado
-                distancia[vizinho] = distancia[atual] + 1; // Atualiza a distância
+                fila[tras++] = vizinho;
+                visitado[vizinho] = 1;
+                distancia[vizinho] = distancia[atual] + 1;
             }
         }
     }
 
-    // Se chegou aqui, os usuários não estão conectados
     return -1;
 }
-
-
 
 /* -----------------------------------------------
  Função para criar o chat 
@@ -904,7 +943,7 @@ void criar_chat(const char *u1, const char *u2, char *nomeArquivo) {
 void carregar_historico_mensagens(const char *arquivo) {
     FILE *f = fopen(arquivo, "r");
     if (!f) {
-        printf("\n[!] Nenhuma conversa anterior encontrada.\n");
+        msg('!', "Nenhuma conversa anterior encontrada.");
         return;
     }
 
@@ -915,7 +954,7 @@ void carregar_historico_mensagens(const char *arquivo) {
     while (fgets(linha, sizeof(linha), f)) {
         printf("\t\t\t\t%s", linha);
     }
-    printf("\n\t\t\t\t+----------------------------------------+\nёт");
+    printf("\n\t\t\t\t+----------------------------------------+\n\n");
 
     fclose(f);
 }
@@ -989,7 +1028,7 @@ void chat(Usuario usuarios[], Usuario *remetente, int total) {
         msg('x', "Erro ao abrir o arquivo de conversa.");
         return;
     }
-    printf("\t\t\t\t+----------------------------------------+\n\n");
+    printf("\t\t\t\t+----------------------------------------+\n");
     printf("\t\t\t\t| @%-20s                  |\n", amigo->username);
     printf("\t\t\t\t+----------------------------------------+\n\n");
     printf("\t\t\t\t(Digite /sair para terminar o chat)\n\n");
@@ -1008,7 +1047,7 @@ void chat(Usuario usuarios[], Usuario *remetente, int total) {
     void *args[2];
     args[0] = nomeArquivo;
     args[1] = &pos;
-    // função atualiza a tela com novas mensagens
+    
     _beginthread(carregar_mensagens, 0, args);
 
     char mensagem[256];
@@ -1028,3 +1067,4 @@ void chat(Usuario usuarios[], Usuario *remetente, int total) {
         }
     }
 }
+
