@@ -10,6 +10,7 @@ char user_atual[50];
 volatile int continuar_chat = 1;
 long last_pos = 0;
 
+
 void* receber_mensagens(void *arg) {
     FILE *file;
     char linha[300];
@@ -20,13 +21,13 @@ void* receber_mensagens(void *arg) {
             fseek(file, last_pos, SEEK_SET);
             while (fgets(linha, sizeof(linha), file)) {
                 printf("\r%s", linha);
-                printf("> "); // reaparece o prompt
+                printf("> "); 
                 fflush(stdout);
             }
             last_pos = ftell(file);
             fclose(file);
         }
-        sleep(1); // espera para checar novas mensagens
+        sleep(1); 
     }
     return NULL;
 }
@@ -69,3 +70,5 @@ void modo_chat(char *user, char *amigo) {
     pthread_join(thread_id, NULL);
     printf("Chat encerrado.\n");
 }
+
+

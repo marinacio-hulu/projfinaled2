@@ -1,7 +1,7 @@
 NAME = rede_social
 CXX = cc
-CXXFLAGS = -lpthread #-Wall -Werror -Wextra 
-SRC = main.c usuarios.c modo_chat.c
+CXXFLAGS = -lpthread -g #-Wall -Werror -Wextra 
+SRC = main.c usuarios.c modo_chat.c Grupo.c AVL.c Heap.c BST.c
 OBJ = $(SRC:.c=.o)
 HDR = usuarios.h
 

@@ -364,12 +364,49 @@ void sugerir_amigos_por_interesse(char *username) {
 
 
 
+void amigos_em_comum(char *user1, char *user2) {
+    Usuario usuarios[MAX_USUARIOS];
+    int total = carregar_usuarios(usuarios, MAX_USUARIOS);
+
+    Usuario *u1 = NULL, *u2 = NULL;
+
+    // Procurar os usuários no vetor
+    for (int i = 0; i < total; i++) {
+        if (strcmp(usuarios[i].username, user1) == 0) {
+            u1 = &usuarios[i];
+        } else if (strcmp(usuarios[i].username, user2) == 0) {
+            u2 = &usuarios[i];
+        }
+    }
+
+    if (!u1 || !u2) {
+        printf("[X] Um dos usuários não foi encontrado.\n");
+        return;
+    }
+
+    printf("\n--- Amigos em comum entre %s e %s ---\n", user1, user2);
+    int count = 0;
+    for (int i = 0; i < u1->num_amigos; i++) {
+        for (int j = 0; j < u2->num_amigos; j++) {
+            if (strcmp(u1->amigos[i], u2->amigos[j]) == 0) {
+                printf("- %s\n", u1->amigos[i]);
+                count++;
+            }
+        }
+    }
+
+    if (count == 0) {
+        printf("Nenhum amigo em comum encontrado.\n");
+    }
+    printf("--------------------------------------\n");
+}
+
 /* -----------------------------------------------
  menu principial da rede, quando o usuário fizer
  o login correcto na rede
  ----------------------------------------------- */
 void logado(char *username) {
-    char op2;
+    int op2;
     char amigo[50];
 
     do 
@@ -391,24 +428,34 @@ void logado(char *username) {
         printf("------------------------------------------\n");
         printf("|            [6] Modo chat               |\n");
         printf("------------------------------------------\n");
+        printf("|           [7] Ranking de usuários      |\n");
+        printf("------------------------------------------\n");
+        printf("|          [8] Ver usuários por ordem    |\n");
+        printf("------------------------------------------\n");
+        printf("|         [9] Ver amigos em comum        |\n");
+        printf("------------------------------------------\n");
+        printf("|        [10] Buscar usuário por nome    |\n");
+        printf("------------------------------------------\n");
+        printf("|        [11] Gerenciar Grupos           |\n");
+        printf("------------------------------------------\n");
         printf("|               [0] Logout               |\n");
         printf("------------------------------------------\n");
-        scanf(" %c", &op2);
+        scanf(" %d", &op2);
 
         switch(op2) 
         {
-            case '1':
+            case 1:
                 alterar_senha(username);
             break;
 
-            case '2':
+            case 2:
                 ver_perfil(username);
             break;
-            case '3':
+            case 3:
                 listar_amigos(username);
             break;
 
-            case '4':
+            case 4:
                 printf("[?] Insira o nome de usuário para adicionar como amigo: ");
                 scanf("%s", amigo);
                 
@@ -417,17 +464,48 @@ void logado(char *username) {
 
                 adicionar_amigo(usuarios, total, username, amigo);
             break;
-            case '5':
+            case 5:
                 sugerir_amigos_por_interesse(username);
              break;
-            case '6':
+            case 6:
                 printf("Iniciar chat com: ");
                 scanf("%s", amigo);
                 modo_chat(username, amigo);
             break;
+            case 7:
+                exibir_ranking_usuarios();
+            break;
+            case 8:
+                ver_usuarios_em_ordem();
+            break;
+            case 9: {
+                char outro_usuario[50];
+                printf("Digite o nome de outro usuário: ");
+                scanf("%s", outro_usuario);
+                amigos_em_comum(username, outro_usuario);
+                break;
+            }
+            case 10:
+                buscar_usuario_por_nome();
+            break;
+            case 11:
+                printf("\n[1] Criar grupo\n[2] Entrar\n[3] Sair\n[4] Chat\n> ");
+                char gop;
+                scanf(" %c", &gop);
+                getchar(); // limpar buffer
+
+                switch (gop) {
+                    case '1': criar_grupo(username); break;
+                    case '2': entrar_grupo(username); break;
+                    case '3': sair_grupo(username); break;
+                    case '4': chat_grupo(username); break;
+                    default: printf("Opção inválida\n");
+                }
+                break;
 
 
-            case '0':
+
+            case 0:
                 printf("Fazendo logout...\n");
             break;
 
@@ -436,8 +514,10 @@ void logado(char *username) {
         }
         //system("pause");
         //system("clear");
-    } while(op2 != '0');
+    } while(op2 != 0);
 }
+
+
 
 /* -----------------------------------------------
  Menu para fazer login na rede
@@ -468,50 +548,5 @@ void fazer_login() {
     }
 }
 
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #include <unistd.h>
-
-// void modo_chat(char *user, char *amigo) {
-//     char filename[100];
-//     sprintf(filename, "chat_%s_%s.txt", user, amigo);
-
-//     char input[256];
-//     long last_pos = 0;
-
-//     printf("Entrando no chat com @%s. Escreva '/sair' para sair.\n", amigo);
-
-//     while (1) {
-//         // Mostra novas mensagens
-//         FILE *file = fopen(filename, "r");
-//         if (file) {
-//             fseek(file, last_pos, SEEK_SET);
-//             char linha[300];
-//             while (fgets(linha, sizeof(linha), file)) {
-//                 printf("%s", linha);
-//             }
-//             last_pos = ftell(file);
-//             fclose(file);
-//         }
-
-//         // Input do usuário
-//         printf("> ");
-//         fgets(input, sizeof(input), stdin);
-//         input[strcspn(input, "\n")] = 0; // remove newline
-
-//         if (strcmp(input, "/sair") == 0)
-//             break;
-
-//         // Escreve mensagem no arquivo
-//         file = fopen(filename, "a");
-//         if (file) {
-//             fprintf(file, "@%s: %s\n", user, input);
-//             fclose(file);
-//         }
-
-//         sleep(1); // Evita uso intensivo de CPU
-//     }
-// }
 
 

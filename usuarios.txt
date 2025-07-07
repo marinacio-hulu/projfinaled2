@@ -1,4 +1,5 @@
-Nuno 45678 ama akak 1 Pedro
-Ana 45678 ama alala 0
-Paulo 45678 love football 0
-Pedro 45678 ama football 1 Nuno
+Nuno 45678 ama akak 3 Pedro Paulo Ana
+Ana 45678 ama alala 3 Nuno Pedro Paulo
+Paulo 45678 love football 2 Nuno Ana
+Pedro 45678 ama football 2 Nuno Ana
+Iam 45678 soul Chess 0
