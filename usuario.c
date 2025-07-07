@@ -1,23 +1,11 @@
 #include "usuario.h"
-
-void usrs(Usuario u[], int total){
-    for (int i = 0; i < total; i++)
-    {
-        printf("---------------------\n");
-        printf("User: %s\n", u[i].username);
-        printf("Pass: %s\n", u[i].senha);
-        printf("---------------------\n");
-
-    }
-    
-}
-
 /* -----------------------------------------------
  Função auxiliar para converter tudo 
  para minusculo
  ----------------------------------------------- */
 void str_tolower(char *str) {
-    for (int i = 0; str[i]; i++) {
+	int i;
+    for (i=0; str[i]; i++) {
         str[i] = tolower((unsigned char)str[i]);
     }
 }
@@ -136,10 +124,15 @@ void cadastrar_usuario(Usuario usuarios[], int *totalUsuarios) {
 
     hash_senha(senha, novo.senha);
 
-    printf("\t\t\t[?] Quantas características? ");
+    printf("\t\t\t[?] Quantas características? (Máx: 10)");
     scanf("%d", &novo.numCaracteristicas);
-
-    for (int i = 0; i < novo.numCaracteristicas; i++) {
+	
+	if(novo.numCaracteristicas > 10 || novo.numCaracteristicas < 1) {
+		msg('!', "Quantidade inválida");
+		return;
+	}
+	int i;
+    for (i=0; i < novo.numCaracteristicas; i++) {
         printf("\t\t\t[?] Característica %d: ", i+1);
         scanf(" %s", novo.caracteristicas[i]);
     }
@@ -337,7 +330,8 @@ void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
             }
         }
         
-        if (amigos) continue;
+        if (amigos) 
+            continue;
 
         // Compara as características do usuário com as do "outro"
         int comum = 0;
@@ -366,9 +360,6 @@ void sugerir_amigos(Usuario usuarios[], int total, Usuario *usuario) {
                 printf("\t\t\t+----------------------------------------+\n");
             }
         }
-
-        system("pause");
-        system("cls");
     }
 
     if (sugeridos == 0) {
@@ -672,8 +663,10 @@ void menu(Usuario usuarios[], int *totalUsuarios) {
         system("cls");
         
         if (op=='1') {
+            atualizar_dados_usuarios(usuarios, totalUsuarios);
             cadastrar_usuario(usuarios, totalUsuarios);
         } else if(op=='2') {
+            atualizar_dados_usuarios(usuarios, totalUsuarios);
             login(usuarios, totalUsuarios);
         } else if(op=='0') {
             exit(1);
@@ -692,10 +685,11 @@ void menu(Usuario usuarios[], int *totalUsuarios) {
 void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
     char op2;
     char user[20];
-    setlocale(LC_ALL, "");
+    setlocale(LC_ALL, "Portuguese");
 
 
     do {
+        atualizar_dados_usuarios(usuarios, &totalUsuarios);
         printf("\t\t+---------------------------------------------------------------------------------+\n");
         printf("\t\t|                                 C O N E C T - C                                 |\n");
         printf("\t\t+---------------------------------------------------------------------------------+\n");
@@ -722,8 +716,10 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         system("cls");
         
         if (op2=='1') {
+        	atualizar_dados_usuarios(usuarios, &totalUsuarios);
             mostrar_perfil(usuario);
         } else if(op2=='2') {
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             printf("\t\t\t+----------------------------------------+\n");
             printf("\t\t\t|            PROCURAR USUÁRIO            |\n");
             printf("\t\t\t+----------------------------------------+\n\n");
@@ -742,18 +738,25 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
         } else if(op2=='3'){
             editar_perfil(usuarios, usuario, totalUsuarios);
         } else if(op2=='4') {
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             enviar_pedido_amizade(usuarios, totalUsuarios, usuario);
         } else if(op2=='5'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             ver_pedidos_amizade(usuarios, totalUsuarios, usuario);
         } else if(op2=='6') {
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             sugerir_amigos(usuarios, totalUsuarios, usuario);
         } else if(op2=='7'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             meus_amigos(usuarios, totalUsuarios, usuario);
         } else if(op2=='8'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             remover_amigo(usuarios, totalUsuarios, usuario);
         } else if(op2=='9'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             seguir_usuario(usuarios, totalUsuarios, usuario);
         } else if(op2=='a' || op2 == 'A'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             printf("\t\t\t[?] Insira o username: ");
             scanf("%s", user);
             system("cls");
@@ -767,10 +770,13 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
                 msg('x', "Usuário não econtrado");
             }
         } else if(op2=='b' || op2 == 'B'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             mostrar_influencers(usuarios, totalUsuarios);
         } else if(op2=='c' || op2 == 'C'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             amigos_em_comum(usuarios, totalUsuarios);
         } else if(op2=='d' || op2 == 'D'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             char u1[MAX_NOME], u2[MAX_NOME];
 
             printf("\t\t\t[?] Primeiro usuário: ");
@@ -790,6 +796,7 @@ void conectC(Usuario usuarios[], Usuario *usuario, int totalUsuarios) {
                 printf("\t\t\t+----------------------------------------+\n\n");
             }
         } else if(op2=='e' || op2 == 'E'){
+            atualizar_dados_usuarios(usuarios, &totalUsuarios);
             chat(usuarios, usuario, totalUsuarios);
         } else if(op2=='0') {
             msg('!', "Secção terminada");
@@ -906,7 +913,8 @@ int distancia_minima(Usuario usuarios[], int total, char *u1, char *u2) {
         Usuario *u = &usuarios[atual];
 
         // Percorre sobre os amigos do usuário atual
-        for (int i = 0; i < u->numAmigos; i++) {
+        int i;
+        for (i=0; i < u->numAmigos; i++) {
 
             // Encontra o índice do amigo (vizinho no grafo)
             int vizinho = encontrar_usuario(usuarios, total, u->amigos[i]);
@@ -1068,3 +1076,9 @@ void chat(Usuario usuarios[], Usuario *remetente, int total) {
     }
 }
 
+/* -----------------------------------------------
+ Função para actualizar todos os dados do usuário 
+----------------------------------------------- */
+void atualizar_dados_usuarios(Usuario usuarios[], int *total) {
+    carregar_usuarios(usuarios, total);
+}
